@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { User, MapPin, Phone, Mail, Calendar, Award, Leaf, Edit, Save, X, CheckCircle, Upload } from 'lucide-react';
-import { userService } from '../services/userService';
-import { useAuth } from '../hooks/useAuth';
+// src/pages/farmer/FarmerProfilePage.jsx
+import { useState, useEffect } from 'react';
+import { User, MapPin, Phone, Mail, Calendar, Award, Leaf, Edit, Camera } from 'lucide-react';
+import { useAuthContext } from '@/context/AuthProvider';
+import authService from '@/services/authService';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Card from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
+import LoadingScreen from '@/components/ui/LoadingScreen';
+import Alert from '@/components/ui/Alert';
+import useNotifications from '@/hooks/useNotifications';
+import { formatDate } from '@/utils/helpers';
 
 const FarmerProfilePage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuthContext();
+  const { success, error: showError } = useNotifications();
+
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
   const [profileData, setProfileData] = useState({
     full_name: '',
     email: '',
@@ -19,357 +32,381 @@ const FarmerProfilePage = () => {
     farming_methods: [],
     certifications: [],
     location: '',
-    profile_image_url: ''
+    profile_image_url: '',
   });
 
   useEffect(() => {
-    fetchProfile();
+    loadProfile();
   }, []);
 
-  const fetchProfile = async () => {
+  const loadProfile = async () => {
     try {
-      setLoading(true);
-      const data = await userService.getProfile();
-      setProfileData(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
+      setIsLoading(true);
+      const data = await authService.getProfile();
+      setProfileData({
+        full_name: data.full_name || '',
+        email: data.email || '',
+        phone_number: data.phone_number || '',
+        farm_name: data.farm_name || '',
+        farm_size_hectares: data.farm_size_hectares || '',
+        primary_crops: data.primary_crops || [],
+        farming_experience_years: data.farming_experience_years || '',
+        farming_methods: data.farming_methods || [],
+        certifications: data.certifications || [],
+        location: data.location || '',
+        profile_image_url: data.profile_image_url || '',
+      });
+      updateUser(data);
+    } catch (err) {
+      console.error('Error loading profile:', err);
+      setError('Failed to load profile');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
+    setError('');
   };
 
   const handleArrayInput = (field, value) => {
-    const items = value.split(',').map(item => item.trim()).filter(item => item);
-    setProfileData(prev => ({
+    const items = value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item);
+    setProfileData((prev) => ({
       ...prev,
-      [field]: items
+      [field]: items,
     }));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Error', 'Image size must be less than 5MB');
+      return;
+    }
+
     try {
-      await userService.updateProfile(profileData);
+      const response = await authService.uploadProfileImage(file);
+      setProfileData((prev) => ({
+        ...prev,
+        profile_image_url: response.image_url,
+      }));
+      success('Success', 'Profile image updated');
+    } catch (err) {
+      showError('Error', err.message || 'Failed to upload image');
+    }
+  };
+
+  const handleSave = async () => {
+    setError('');
+    setIsSaving(true);
+
+    try {
+      const updatedUser = await authService.updateProfile(profileData);
+      updateUser(updatedUser);
       setIsEditing(false);
-      alert('Profile updated successfully!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      success('Success', 'Profile updated successfully!');
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    fetchProfile();
+    loadProfile();
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingScreen message="Loading profile..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-6">
-              {/* Profile Image */}
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
-                  {profileData.profile_image_url ? (
-                    <img src={profileData.profile_image_url} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-12 h-12 text-green-500" />
-                  )}
-                </div>
-                {isEditing && (
-                  <button className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full hover:bg-green-600">
-                    <Upload className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Farmer Profile</h1>
+          <p className="text-neutral-400">Manage your farm information and credentials</p>
+        </div>
+        {!isEditing ? (
+          <Button icon={Edit} onClick={() => setIsEditing(true)}>
+            Edit Profile
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleCancel} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} loading={isSaving} disabled={isSaving}>
+              Save Changes
+            </Button>
+          </div>
+        )}
+      </div>
 
-              {/* Basic Info */}
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{profileData.full_name}</h1>
-                <p className="text-gray-600">{profileData.farm_name}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Phone className="w-4 h-4" />
-                    {profileData.phone_number}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Mail className="w-4 h-4" />
-                    {profileData.email}
-                  </span>
-                </div>
-                {profileData.is_verified_farmer && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-semibold text-green-600">Verified Farmer</span>
-                  </div>
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="error" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profile Card */}
+        <Card>
+          <div className="text-center">
+            {/* Profile Image */}
+            <div className="relative inline-block mb-4">
+              <div className="w-32 h-32 rounded-full bg-accent-teal/20 flex items-center justify-center overflow-hidden">
+                {profileData.profile_image_url ? (
+                  <img
+                    src={profileData.profile_image_url}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={48} className="text-accent-cyan" />
                 )}
               </div>
+              {isEditing && (
+                <label className="absolute bottom-0 right-0 w-10 h-10 bg-accent-cyan rounded-full flex items-center justify-center cursor-pointer hover:bg-accent-teal transition-colors">
+                  <Camera size={20} className="text-primary-dark" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
-            {/* Edit Button */}
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-              >
-                <Edit className="w-4 h-4" />
-                Edit Profile
-              </button>
+            <h2 className="text-2xl font-bold mb-2">{profileData.full_name}</h2>
+            <p className="text-neutral-400 mb-4">{profileData.farm_name}</p>
+
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {user?.is_verified_farmer && (
+                <Badge variant="success">
+                  <Award size={12} className="mr-1" />
+                  Verified Farmer
+                </Badge>
+              )}
+              {profileData.farming_experience_years && (
+                <Badge variant="info">
+                  {profileData.farming_experience_years} years
+                </Badge>
+              )}
+            </div>
+
+            {/* Member Since */}
+            <div className="pt-4 border-t border-neutral-800">
+              <p className="text-sm text-neutral-500 mb-1">Member since</p>
+              <p className="font-medium">{formatDate(user?.created_at || new Date())}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Personal Information */}
+          <Card title="Personal Information">
+            {isEditing ? (
+              <div className="space-y-4">
+                <Input
+                  label="Full Name"
+                  name="full_name"
+                  value={profileData.full_name}
+                  onChange={handleInputChange}
+                  icon={User}
+                />
+                <Input
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={handleInputChange}
+                  icon={Mail}
+                />
+                <Input
+                  label="Phone Number"
+                  name="phone_number"
+                  type="tel"
+                  value={profileData.phone_number}
+                  onChange={handleInputChange}
+                  icon={Phone}
+                />
+                <Input
+                  label="Location"
+                  name="location"
+                  value={profileData.location}
+                  onChange={handleInputChange}
+                  icon={MapPin}
+                  placeholder="City, Region"
+                />
+              </div>
             ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:bg-gray-400"
-                >
-                  <Save className="w-4 h-4" />
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Mail size={20} className="text-neutral-500" />
+                  <span className="text-neutral-300">{profileData.email}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone size={20} className="text-neutral-500" />
+                  <span className="text-neutral-300">{profileData.phone_number}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin size={20} className="text-neutral-500" />
+                  <span className="text-neutral-300">
+                    {profileData.location || 'Not specified'}
+                  </span>
+                </div>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Profile Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Personal Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-green-500" />
-              Personal Information
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="full_name"
-                    value={profileData.full_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.full_name}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={profileData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.email}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                {isEditing ? (
-                  <input
-                    type="tel"
-                    name="phone_number"
-                    value={profileData.phone_number}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.phone_number}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <MapPin className="inline w-4 h-4 mr-1" />
-                  Location
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="location"
-                    value={profileData.location}
-                    onChange={handleInputChange}
-                    placeholder="City, Region"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.location || 'Not specified'}</p>
-                )}
-              </div>
-            </div>
-          </div>
+          </Card>
 
           {/* Farm Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Leaf className="w-5 h-5 text-green-500" />
-              Farm Information
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Farm Name</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="farm_name"
-                    value={profileData.farm_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.farm_name}</p>
-                )}
+          <Card title="Farm Information">
+            {isEditing ? (
+              <div className="space-y-4">
+                <Input
+                  label="Farm Name"
+                  name="farm_name"
+                  value={profileData.farm_name}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  label="Farm Size (Hectares)"
+                  name="farm_size_hectares"
+                  type="number"
+                  value={profileData.farm_size_hectares}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  label="Farming Experience (Years)"
+                  name="farming_experience_years"
+                  type="number"
+                  value={profileData.farming_experience_years}
+                  onChange={handleInputChange}
+                  icon={Calendar}
+                />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Farm Size (Hectares)</label>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    name="farm_size_hectares"
-                    value={profileData.farm_size_hectares}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.farm_size_hectares} ha</p>
-                )}
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-neutral-400 mb-1">Farm Size</p>
+                  <p className="text-neutral-300">{profileData.farm_size_hectares} hectares</p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400 mb-1">Experience</p>
+                  <p className="text-neutral-300">
+                    {profileData.farming_experience_years} years
+                  </p>
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Calendar className="inline w-4 h-4 mr-1" />
-                  Farming Experience
-                </label>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    name="farming_experience_years"
-                    value={profileData.farming_experience_years}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{profileData.farming_experience_years} years</p>
-                )}
-              </div>
-            </div>
-          </div>
+            )}
+          </Card>
 
           {/* Primary Crops */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Primary Crops</h2>
+          <Card title="Primary Crops">
             {isEditing ? (
               <div>
-                <input
-                  type="text"
+                <Input
                   placeholder="Enter crops separated by commas"
                   defaultValue={profileData.primary_crops?.join(', ')}
                   onBlur={(e) => handleArrayInput('primary_crops', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  icon={Leaf}
                 />
-                <p className="text-xs text-gray-500 mt-1">Separate multiple crops with commas</p>
+                <p className="text-xs text-neutral-500 mt-2">
+                  Separate multiple crops with commas
+                </p>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {profileData.primary_crops?.map((crop, index) => (
-                  <span key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                    {crop}
-                  </span>
-                ))}
+                {profileData.primary_crops?.length > 0 ? (
+                  profileData.primary_crops.map((crop, index) => (
+                    <Badge key={index} variant="success">
+                      {crop}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-neutral-500">No crops specified</p>
+                )}
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Farming Methods & Certifications */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Award className="w-5 h-5 text-green-500" />
-              Methods & Certifications
-            </h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Farming Methods</label>
-                {isEditing ? (
-                  <input
-                    type="text"
+          <Card title="Methods & Certifications">
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-2">
+                    Farming Methods
+                  </label>
+                  <Input
                     placeholder="e.g., Organic, Traditional, Modern"
                     defaultValue={profileData.farming_methods?.join(', ')}
                     onBlur={(e) => handleArrayInput('farming_methods', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   />
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {profileData.farming_methods?.map((method, index) => (
-                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                        {method}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
-                {isEditing ? (
-                  <input
-                    type="text"
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-2">
+                    Certifications
+                  </label>
+                  <Input
                     placeholder="e.g., Organic Certified, GAP"
                     defaultValue={profileData.certifications?.join(', ')}
                     onBlur={(e) => handleArrayInput('certifications', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   />
-                ) : (
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-neutral-400 mb-2">Farming Methods</p>
+                  <div className="flex flex-wrap gap-2">
+                    {profileData.farming_methods?.length > 0 ? (
+                      profileData.farming_methods.map((method, index) => (
+                        <Badge key={index} variant="info">
+                          {method}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-neutral-500 text-sm">No methods specified</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-neutral-400 mb-2">Certifications</p>
                   <div className="flex flex-wrap gap-2">
                     {profileData.certifications?.length > 0 ? (
                       profileData.certifications.map((cert, index) => (
-                        <span key={index} className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                        <Badge key={index} variant="cyan">
+                          <Award size={12} className="mr-1" />
                           {cert}
-                        </span>
+                        </Badge>
                       ))
                     ) : (
-                      <p className="text-gray-500 text-sm">No certifications</p>
+                      <p className="text-neutral-500 text-sm">No certifications</p>
                     )}
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </Card>
         </div>
       </div>
     </div>

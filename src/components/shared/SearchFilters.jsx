@@ -1,40 +1,25 @@
-import React, { useState } from 'react';
-import { Search, Filter, X, MapPin, DollarSign, Calendar, Leaf, SlidersHorizontal } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Filter, X, MapPin, SlidersHorizontal, Leaf } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import clsx from 'clsx';
+import { PRODUCT_CATEGORIES, QUALITY_GRADES } from '@/types';
 
-const SearchFilters = ({ onFilterChange, onSearch }) => {
+const SearchFilters = ({ onFilterChange, onSearch, initialFilters = {} }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    category: 'all',
-    minPrice: '',
-    maxPrice: '',
-    location: '',
-    isOrganic: false,
-    qualityGrade: 'all',
-    sortBy: 'newest',
-    inStock: true,
-    harvestDateFrom: '',
-    harvestDateTo: ''
+    category: initialFilters.category || 'all',
+    minPrice: initialFilters.minPrice || '',
+    maxPrice: initialFilters.maxPrice || '',
+    location: initialFilters.location || '',
+    isOrganic: initialFilters.isOrganic || false,
+    qualityGrade: initialFilters.qualityGrade || 'all',
+    sortBy: initialFilters.sortBy || 'newest',
+    inStock: initialFilters.inStock !== undefined ? initialFilters.inStock : true,
+    harvestDateFrom: initialFilters.harvestDateFrom || '',
+    harvestDateTo: initialFilters.harvestDateTo || ''
   });
-
-  const categories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'vegetables', label: 'Vegetables' },
-    { value: 'fruits', label: 'Fruits' },
-    { value: 'grains', label: 'Grains' },
-    { value: 'legumes', label: 'Legumes' },
-    { value: 'tubers', label: 'Tubers' },
-    { value: 'livestock', label: 'Livestock' },
-    { value: 'dairy', label: 'Dairy' },
-    { value: 'poultry', label: 'Poultry' }
-  ];
-
-  const qualityGrades = [
-    { value: 'all', label: 'All Grades' },
-    { value: 'A', label: 'Grade A' },
-    { value: 'B', label: 'Grade B' },
-    { value: 'C', label: 'Grade C' }
-  ];
 
   const sortOptions = [
     { value: 'newest', label: 'Newest First' },
@@ -95,101 +80,105 @@ const SearchFilters = ({ onFilterChange, onSearch }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div className="space-y-4">
       {/* Search Bar */}
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <Input
             type="text"
             placeholder="Search products..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            icon={Search}
           />
         </div>
         
-        <button
+        <Button
+          variant={showFilters ? 'primary' : 'secondary'}
+          icon={SlidersHorizontal}
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition ${
-            showFilters ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
         >
-          <SlidersHorizontal className="w-5 h-5" />
           Filters
           {getActiveFiltersCount() > 0 && (
-            <span className="ml-1 px-2 py-0.5 bg-white text-green-500 rounded-full text-xs font-bold">
+            <span className="ml-2 px-2 py-0.5 bg-accent-cyan text-primary-dark rounded-full text-xs font-bold">
               {getActiveFiltersCount()}
             </span>
           )}
-        </button>
+        </Button>
       </div>
 
       {/* Quick Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {categories.slice(1, 5).map(cat => (
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(PRODUCT_CATEGORIES).slice(0, 4).map(([key, value]) => (
           <button
-            key={cat.value}
-            onClick={() => handleFilterChange('category', cat.value)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-              filters.category === cat.value
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            key={key}
+            onClick={() => handleFilterChange('category', value)}
+            className={clsx(
+              'px-3 py-1.5 rounded-full text-sm font-medium transition-colors capitalize',
+              filters.category === value
+                ? 'bg-accent-cyan text-primary-dark'
+                : 'bg-primary-light text-neutral-300 hover:bg-neutral-800 border border-neutral-700'
+            )}
           >
-            {cat.label}
+            {value}
           </button>
         ))}
         <button
           onClick={() => handleFilterChange('isOrganic', !filters.isOrganic)}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition ${
+          className={clsx(
+            'flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
             filters.isOrganic
-              ? 'bg-green-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+              ? 'bg-success text-white'
+              : 'bg-primary-light text-neutral-300 hover:bg-neutral-800 border border-neutral-700'
+          )}
         >
-          <Leaf className="w-4 h-4" />
+          <Leaf size={16} />
           Organic
         </button>
       </div>
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="border-t border-gray-200 pt-4">
+        <div className="card animate-fade-in">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Advanced Filters</h3>
-            <button
-              onClick={resetFilters}
-              className="flex items-center gap-1 text-sm text-red-500 hover:text-red-600"
-            >
-              <X className="w-4 h-4" />
-              Reset All
-            </button>
+            <h3 className="text-lg font-semibold">Advanced Filters</h3>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={resetFilters}
+                icon={X}
+              >
+                Reset
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 <Filter className="inline w-4 h-4 mr-1" />
                 Category
               </label>
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="input"
               >
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                <option value="all">All Categories</option>
+                {Object.entries(PRODUCT_CATEGORIES).map(([key, value]) => (
+                  <option key={key} value={value} className="capitalize">
+                    {value}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Price Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <DollarSign className="inline w-4 h-4 mr-1" />
-                Price Range
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                💰 Price Range
               </label>
               <div className="flex gap-2">
                 <input
@@ -197,21 +186,21 @@ const SearchFilters = ({ onFilterChange, onSearch }) => {
                   placeholder="Min"
                   value={filters.minPrice}
                   onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="input w-1/2"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.maxPrice}
                   onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="input w-1/2"
                 />
               </div>
             </div>
 
             {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 <MapPin className="inline w-4 h-4 mr-1" />
                 Location
               </label>
@@ -220,80 +209,83 @@ const SearchFilters = ({ onFilterChange, onSearch }) => {
                 placeholder="Enter location"
                 value={filters.location}
                 onChange={(e) => handleFilterChange('location', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="input"
               />
             </div>
 
             {/* Quality Grade */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 Quality Grade
               </label>
               <select
                 value={filters.qualityGrade}
                 onChange={(e) => handleFilterChange('qualityGrade', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="input"
               >
-                {qualityGrades.map(grade => (
-                  <option key={grade.value} value={grade.value}>{grade.label}</option>
+                <option value="all">All Grades</option>
+                {Object.entries(QUALITY_GRADES).map(([key, value]) => (
+                  <option key={key} value={value} className="capitalize">
+                    {value.replace(/_/g, ' ')}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Harvest Date From */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar className="inline w-4 h-4 mr-1" />
-                Harvest From
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                📅 Harvest From
               </label>
               <input
                 type="date"
                 value={filters.harvestDateFrom}
                 onChange={(e) => handleFilterChange('harvestDateFrom', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="input"
               />
             </div>
 
             {/* Harvest Date To */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar className="inline w-4 h-4 mr-1" />
-                Harvest To
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                📅 Harvest To
               </label>
               <input
                 type="date"
                 value={filters.harvestDateTo}
                 onChange={(e) => handleFilterChange('harvestDateTo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="input"
               />
             </div>
 
             {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 Sort By
               </label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="input"
               >
                 {sortOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* In Stock Only */}
-            <div className="flex items-center">
+            <div className="flex items-center pt-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={filters.inStock}
                   onChange={(e) => handleFilterChange('inStock', e.target.checked)}
-                  className="w-4 h-4 text-green-500 border-gray-300 rounded focus:ring-green-500"
+                  className="w-4 h-4 text-accent-cyan border-neutral-700 rounded focus:ring-accent-teal bg-primary-light"
                 />
-                <span className="text-sm font-medium text-gray-700">In Stock Only</span>
+                <span className="text-sm font-medium text-neutral-300">In Stock Only</span>
               </label>
             </div>
           </div>
