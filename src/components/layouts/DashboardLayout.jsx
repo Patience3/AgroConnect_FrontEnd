@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import NotificationCenter from '@/components/shared/NotificationCenter';
+
+
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/context/AuthProvider';
 import {
@@ -31,6 +34,7 @@ const DashboardLayout = () => {
       return [
         { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingBag },
         { name: 'My Orders', href: '/dashboard/orders', icon: Package },
+        { name: 'My cart', href: '/dashboard/cart', icon: Package },
       ];
     }
 
@@ -55,11 +59,36 @@ const DashboardLayout = () => {
 
   const navigationItems = getNavigationItems();
 
-  const handleRoleSwitch = (role) => {
+  {/*const handleRoleSwitch = (role) => {
     switchRole(role);
     setDropdownOpen(false);
     window.location.href = '/dashboard';
-  };
+  };*/}
+  const handleRoleSwitch = async (role) => {
+  // Check if user has this role
+  if (!user.roles.includes(role)) {
+    setError('You do not have access to this role. Please add it in your profile.');
+    return;
+  }
+
+  try {
+    await switchRole(role);
+    setDropdownOpen(false);
+    
+    // Navigate based on role WITHOUT page reload
+    if (role === 'farmer') {
+      navigate('/dashboard/farmer');
+    } else if (role === 'officer') {
+      navigate('/dashboard/officer');
+    } else {
+      navigate('/dashboard/marketplace');
+    }
+  } catch (error) {
+    console.error('Error switching role:', error);
+    setError('Failed to switch role');
+  }
+};
+  
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -85,6 +114,17 @@ const DashboardLayout = () => {
                 </span>
               </Link>
             </div>
+            // In the navigation bar, add:
+            <Link to="/dashboard/cart">
+              <button className="relative">
+                <ShoppingCart size={20} />
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-accent-cyan text-primary-dark rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                    {getCartCount()}
+                  </span>
+                )}
+              </button>
+            </Link>
 
             {/* Right side actions */}
             <div className="flex items-center gap-4">
@@ -94,6 +134,8 @@ const DashboardLayout = () => {
               </div>
 
               {/* Notifications */}
+              // In navbar:
+              <NotificationCenter />
               <button className="relative text-neutral-300 hover:text-accent-cyan">
                 <Bell size={20} />
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
@@ -148,13 +190,14 @@ const DashboardLayout = () => {
                     )}
 
                     <div className="p-2">
-                      <button
-                        onClick={() => {}}
-                        className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-primary-dark rounded-md flex items-center gap-2"
-                      >
-                        <Settings size={16} />
-                        Settings
-                      </button>
+                      <Link 
+                      to={`/dashboard/${currentRole}/profile`}
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-primary-dark rounded-md flex items-center gap-2"
+                    >
+                      <Settings size={16} />
+                      Profile & Settings
+                    </Link>
                       <button
                         onClick={logout}
                         className="w-full text-left px-3 py-2 text-sm text-error hover:bg-error/10 rounded-md flex items-center gap-2"

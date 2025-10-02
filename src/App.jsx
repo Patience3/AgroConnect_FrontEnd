@@ -41,6 +41,7 @@ import OfficerProfilePage from './pages/officer/OfficerProfilePage';
 import ReportsPage from './pages/officer/ReportsPage';
 import VirtualConsultationPage from './pages/officer/VirtualConsultationPage';
 
+
 // Layouts
 import DashboardLayout from './components/layouts/DashboardLayout';
 
@@ -301,6 +302,7 @@ function AppRoutes() {
           }
         />
       </Route>
+  
 
       {/* ========== 404 ROUTE ========== */}
       <Route path="*" element={<Navigate to="/" replace />} />

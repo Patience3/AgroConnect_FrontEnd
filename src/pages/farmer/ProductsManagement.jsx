@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { formatCurrency } from '@/utils/helpers';
 import { PRODUCT_STATUS } from '@/types';
+import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
 const ProductsManagement = () => {
@@ -32,9 +33,22 @@ const ProductsManagement = () => {
     }
   };
 
-  const filteredProducts = products.filter((product) =>
+  {/*const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );*/}
+  const filteredProducts = products.filter((product) =>{
+    if (filterStatus === 'all') return true;
+    else if (filterStatus === 'available') return product.status === PRODUCT_STATUS.AVAILABLE;
+    else if (filterStatus === 'out_of_stock') return product.status === PRODUCT_STATUS.OUT_OF_STOCK;
+    else if (filterStatus === 'discontinued') return product.status === PRODUCT_STATUS.DISCONTINUED;
+    return product.status === filterStatus;
+  }
+    
   );
+    const filteredOrders = orders.filter(order => {
+  if (filterStatus === 'all') return true;
+  return order.status === filterStatus;
+});
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -105,21 +119,21 @@ const ProductsManagement = () => {
                   {showActions && (
                     <div className="absolute right-0 mt-2 w-48 bg-primary-light border border-neutral-800 rounded-lg shadow-card z-10">
                       <button
-                        onClick={() => {}}
+                        onClick={() => navigate(`/dashboard/product/${product.id}`)}
                         className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-primary-dark flex items-center gap-2"
                       >
                         <Eye size={16} />
                         View Details
                       </button>
                       <button
-                        onClick={() => {}}
+                        onClick={() => navigate(`/dashboard/farmer/products/${product.id}/edit`)}
                         className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-primary-dark flex items-center gap-2"
                       >
                         <Edit size={16} />
                         Edit Product
                       </button>
                       <button
-                        onClick={() => {}}
+                        onClick={() => handleDeleteProduct(product.id)}
                         className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
                       >
                         <Trash2 size={16} />

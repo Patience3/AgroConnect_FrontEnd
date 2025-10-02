@@ -86,15 +86,30 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
-  const switchRole = async (role) => {
+ // Update the switchRole function
+const switchRole = async (role) => {
+  try {
+    // In development mode, just update local state
+    if (DEVELOPMENT_MODE && import.meta.env.MODE === 'development') {
+      authService.setCurrentRole(role);
+      setCurrentRole(role);
+      return;
+    }
+    
+    // In production, call API
     await authService.switchRole(role);
     setCurrentRole(role);
-  };
+  } catch (error) {
+    console.error('Error switching role:', error);
+    throw error;
+  }
+};
 
   const updateUser = (userData) => {
     setUser(userData);
     authService.setUser(userData);
   };
+  
 
   const hasRole = (role) => user?.roles?.includes(role) || false;
 

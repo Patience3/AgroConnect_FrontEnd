@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   TrendingUp,
   Package,
@@ -8,15 +8,15 @@ import {
   ArrowRight,
   AlertCircle,
   Users,
-} from 'lucide-react';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import { formatCurrency, formatNumber } from '@/utils/helpers';
-import clsx from 'clsx';
+} from "lucide-react";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import { formatCurrency, formatNumber } from "@/utils/helpers";
+import clsx from "clsx";
 
 const FarmerDashboard = () => {
   const [stats, setStats] = useState({
-    totalRevenue: 12450.50,
+    totalRevenue: 12450.5,
     totalOrders: 87,
     activeProducts: 23,
     averageRating: 4.8,
@@ -24,37 +24,37 @@ const FarmerDashboard = () => {
 
   const [recentOrders, setRecentOrders] = useState([
     {
-      id: '1',
-      order_number: 'ORD-2025-00456',
-      buyer_name: 'John Doe',
-      total_amount: 125.50,
-      status: 'pending',
+      id: "1",
+      order_number: "ORD-2025-00456",
+      buyer_name: "John Doe",
+      total_amount: 125.5,
+      status: "pending",
       created_at: new Date().toISOString(),
     },
     {
-      id: '2',
-      order_number: 'ORD-2025-00455',
-      buyer_name: 'Jane Smith',
-      total_amount: 89.00,
-      status: 'confirmed',
+      id: "2",
+      order_number: "ORD-2025-00455",
+      buyer_name: "Jane Smith",
+      total_amount: 89.0,
+      status: "confirmed",
       created_at: new Date(Date.now() - 86400000).toISOString(),
     },
   ]);
 
   const [lowStockProducts, setLowStockProducts] = useState([
-    { id: '1', name: 'Fresh Tomatoes', quantity: 5, unit: 'kg' },
-    { id: '2', name: 'Organic Spinach', quantity: 3, unit: 'kg' },
+    { id: "1", name: "Fresh Tomatoes", quantity: 5, unit: "kg" },
+    { id: "2", name: "Organic Spinach", quantity: 3, unit: "kg" },
   ]);
 
   const StatCard = ({ title, value, icon: Icon, color, trend }) => (
     <Card hover className="relative overflow-hidden">
       <div
         className={clsx(
-          'absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl opacity-20',
-          color === 'cyan' && 'bg-accent-cyan',
-          color === 'teal' && 'bg-accent-teal',
-          color === 'success' && 'bg-success',
-          color === 'warning' && 'bg-warning'
+          "absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl opacity-20",
+          color === "cyan" && "bg-accent-cyan",
+          color === "teal" && "bg-accent-teal",
+          color === "success" && "bg-success",
+          color === "warning" && "bg-warning"
         )}
       />
       <div className="relative">
@@ -65,11 +65,11 @@ const FarmerDashboard = () => {
           </div>
           <div
             className={clsx(
-              'w-12 h-12 rounded-lg flex items-center justify-center',
-              color === 'cyan' && 'bg-accent-cyan/20 text-accent-cyan',
-              color === 'teal' && 'bg-accent-teal/20 text-accent-teal',
-              color === 'success' && 'bg-success/20 text-success',
-              color === 'warning' && 'bg-warning/20 text-warning'
+              "w-12 h-12 rounded-lg flex items-center justify-center",
+              color === "cyan" && "bg-accent-cyan/20 text-accent-cyan",
+              color === "teal" && "bg-accent-teal/20 text-accent-teal",
+              color === "success" && "bg-success/20 text-success",
+              color === "warning" && "bg-warning/20 text-warning"
             )}
           >
             <Icon size={24} />
@@ -100,7 +100,7 @@ const FarmerDashboard = () => {
           value={formatCurrency(stats.totalRevenue)}
           icon={DollarSign}
           color="cyan"
-          trend="+12% this month"
+          trend="+3% this month"
         />
         <StatCard
           title="Total Orders"
@@ -129,7 +129,12 @@ const FarmerDashboard = () => {
           title="Recent Orders"
           headerAction={
             <Link to="/dashboard/farmer/orders">
-              <Button size="sm" variant="ghost" icon={ArrowRight} iconPosition="right">
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={ArrowRight}
+                iconPosition="right"
+              >
                 View All
               </Button>
             </Link>
@@ -144,7 +149,9 @@ const FarmerDashboard = () => {
                 >
                   <div>
                     <p className="font-medium mb-1">{order.order_number}</p>
-                    <p className="text-sm text-neutral-400">{order.buyer_name}</p>
+                    <p className="text-sm text-neutral-400">
+                      {order.buyer_name}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="price font-semibold">
@@ -152,9 +159,9 @@ const FarmerDashboard = () => {
                     </p>
                     <span
                       className={clsx(
-                        'text-xs px-2 py-1 rounded-full',
-                        order.status === 'pending' && 'badge-warning',
-                        order.status === 'confirmed' && 'badge-info'
+                        "text-xs px-2 py-1 rounded-full",
+                        order.status === "pending" && "badge-warning",
+                        order.status === "confirmed" && "badge-info"
                       )}
                     >
                       {order.status}
@@ -164,7 +171,9 @@ const FarmerDashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-neutral-500 text-center py-8">No recent orders</p>
+            <p className="text-neutral-500 text-center py-8">
+              No recent orders
+            </p>
           )}
         </Card>
 
@@ -173,7 +182,12 @@ const FarmerDashboard = () => {
           title="Low Stock Alert"
           headerAction={
             <Link to="/dashboard/farmer/products">
-              <Button size="sm" variant="ghost" icon={ArrowRight} iconPosition="right">
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={ArrowRight}
+                iconPosition="right"
+              >
                 Manage
               </Button>
             </Link>
@@ -195,7 +209,14 @@ const FarmerDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <Button size="sm">Restock</Button>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      navigate(`/dashboard/farmer/products/${product.id}/edit`)
+                    }
+                  >
+                    Restock
+                  </Button>
                 </div>
               ))}
             </div>
@@ -217,7 +238,6 @@ const FarmerDashboard = () => {
               <p className="text-sm text-neutral-400">List new products</p>
             </button>
           </Link>
-
           <Link to="/dashboard/farmer/orders">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <ShoppingBag className="text-accent-teal mb-3" size={32} />
@@ -225,7 +245,6 @@ const FarmerDashboard = () => {
               <p className="text-sm text-neutral-400">Manage orders</p>
             </button>
           </Link>
-
           <Link to="/dashboard/farmer/products">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <TrendingUp className="text-success mb-3" size={32} />
@@ -233,12 +252,14 @@ const FarmerDashboard = () => {
               <p className="text-sm text-neutral-400">Manage stock</p>
             </button>
           </Link>
-
-          <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
-            <Users className="text-warning mb-3" size={32} />
-            <h3 className="font-semibold mb-1">Request Visit</h3>
-            <p className="text-sm text-neutral-400">Get support</p>
-          </button>
+          // AFTER
+          <Link to="/dashboard/farmer/request-visit">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
+              <Users className="text-warning mb-3" size={32} />
+              <h3 className="font-semibold mb-1">Request Visit</h3>
+              <p className="text-sm text-neutral-400">Get support</p>
+            </button>
+          </Link>
         </div>
       </Card>
     </div>

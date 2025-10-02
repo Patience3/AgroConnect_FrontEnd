@@ -1,45 +1,45 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthContext } from '@/context/AuthProvider';
-import { Phone, Mail, Lock, User, AlertCircle, Check } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Card from '@/components/ui/Card';
-import clsx from 'clsx';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthContext } from "@/context/AuthProvider";
+import { Phone, Mail, Lock, User, AlertCircle, Check } from "lucide-react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Card from "@/components/ui/Card";
+import clsx from "clsx";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register } = useAuthContext();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    full_name: '',
-    phone_number: '',
-    email: '',
-    password: '',
-    confirm_password: '',
+    full_name: "",
+    phone_number: "",
+    email: "",
+    password: "",
+    confirm_password: "",
     roles: [],
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const roles = [
     {
-      value: 'buyer',
-      title: 'Buyer',
-      description: 'Purchase fresh products from local farmers',
-      icon: '🛒',
+      value: "buyer",
+      title: "Buyer",
+      description: "Purchase fresh products from local farmers",
+      icon: "🛒",
     },
     {
-      value: 'farmer',
-      title: 'Farmer',
-      description: 'Sell your agricultural products directly to buyers',
-      icon: '🌾',
+      value: "farmer",
+      title: "Farmer",
+      description: "Sell your agricultural products directly to buyers",
+      icon: "🌾",
     },
     {
-      value: 'officer',
-      title: 'Extension Officer',
-      description: 'Support and verify farmers in your area',
-      icon: '👨‍🌾',
+      value: "officer",
+      title: "Extension Officer",
+      description: "Support and verify farmers in your area",
+      icon: "👨‍🌾",
     },
   ];
 
@@ -48,7 +48,7 @@ const RegisterPage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    setError('');
+    setError("");
   };
 
   const handleRoleToggle = (role) => {
@@ -58,32 +58,32 @@ const RegisterPage = () => {
         ? formData.roles.filter((r) => r !== role)
         : [...formData.roles, role],
     });
-    setError('');
+    setError("");
   };
 
   const validateStep1 = () => {
     if (!formData.full_name.trim()) {
-      setError('Full name is required');
+      setError("Full name is required");
       return false;
     }
     if (!formData.phone_number.trim()) {
-      setError('Phone number is required');
+      setError("Phone number is required");
       return false;
     }
     if (!formData.email.trim()) {
-      setError('Email is required');
+      setError("Email is required");
       return false;
     }
     if (!formData.password) {
-      setError('Password is required');
+      setError("Password is required");
       return false;
     }
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError("Password must be at least 8 characters");
       return false;
     }
     if (formData.password !== formData.confirm_password) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return false;
     }
     return true;
@@ -91,7 +91,7 @@ const RegisterPage = () => {
 
   const validateStep2 = () => {
     if (formData.roles.length === 0) {
-      setError('Please select at least one role');
+      setError("Please select at least one role");
       return false;
     }
     return true;
@@ -100,28 +100,28 @@ const RegisterPage = () => {
   const handleNext = () => {
     if (step === 1 && validateStep1()) {
       setStep(2);
-      setError('');
+      setError("");
     }
   };
 
   const handleBack = () => {
     setStep(1);
-    setError('');
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateStep2()) return;
 
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
       await register(formData);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -149,13 +149,13 @@ const RegisterPage = () => {
             <div className="flex items-center gap-2">
               <div
                 className={clsx(
-                  'w-8 h-8 rounded-full flex items-center justify-center font-semibold',
+                  "w-8 h-8 rounded-full flex items-center justify-center font-semibold",
                   step >= 1
-                    ? 'bg-accent-cyan text-primary-dark'
-                    : 'bg-primary-light text-neutral-500'
+                    ? "bg-accent-cyan text-primary-dark"
+                    : "bg-primary-light text-neutral-500"
                 )}
               >
-                {step > 1 ? <Check size={20} /> : '1'}
+                {step > 1 ? <Check size={20} /> : "1"}
               </div>
               <span className="text-sm text-neutral-300">Basic Info</span>
             </div>
@@ -163,10 +163,10 @@ const RegisterPage = () => {
             <div className="flex items-center gap-2">
               <div
                 className={clsx(
-                  'w-8 h-8 rounded-full flex items-center justify-center font-semibold',
+                  "w-8 h-8 rounded-full flex items-center justify-center font-semibold",
                   step >= 2
-                    ? 'bg-accent-cyan text-primary-dark'
-                    : 'bg-primary-light text-neutral-500'
+                    ? "bg-accent-cyan text-primary-dark"
+                    : "bg-primary-light text-neutral-500"
                 )}
               >
                 2
@@ -186,7 +186,13 @@ const RegisterPage = () => {
 
           {/* Step 1: Basic Information */}
           {step === 1 && (
-            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-6">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleNext();
+              }}
+              className="space-y-6"
+            >
               <Input
                 label="Full Name"
                 name="full_name"
@@ -268,10 +274,10 @@ const RegisterPage = () => {
                       type="button"
                       onClick={() => handleRoleToggle(role.value)}
                       className={clsx(
-                        'w-full p-4 rounded-lg border-2 transition-all text-left',
+                        "w-full p-4 rounded-lg border-2 transition-all text-left",
                         formData.roles.includes(role.value)
-                          ? 'border-accent-cyan bg-accent-cyan/10'
-                          : 'border-neutral-700 hover:border-accent-teal/50'
+                          ? "border-accent-cyan bg-accent-cyan/10"
+                          : "border-neutral-700 hover:border-accent-teal/50"
                       )}
                     >
                       <div className="flex items-start gap-4">
@@ -286,10 +292,10 @@ const RegisterPage = () => {
                         </div>
                         <div
                           className={clsx(
-                            'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                            "w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0",
                             formData.roles.includes(role.value)
-                              ? 'border-accent-cyan bg-accent-cyan'
-                              : 'border-neutral-600'
+                              ? "border-accent-cyan bg-accent-cyan"
+                              : "border-neutral-600"
                           )}
                         >
                           {formData.roles.includes(role.value) && (
@@ -311,6 +317,7 @@ const RegisterPage = () => {
                 >
                   Back
                 </Button>
+
                 <Button
                   type="submit"
                   fullWidth
@@ -325,7 +332,7 @@ const RegisterPage = () => {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-neutral-400">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 to="/login"
                 className="text-accent-cyan hover:text-accent-teal font-medium"

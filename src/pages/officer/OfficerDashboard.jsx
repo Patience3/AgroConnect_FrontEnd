@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button';
 import { formatDate } from '@/utils/helpers';
 import clsx from 'clsx';
 
+
 const OfficerDashboard = () => {
   const [stats] = useState({
     totalFarmers: 156,
@@ -231,6 +232,8 @@ const OfficerDashboard = () => {
               <p className="text-sm text-neutral-400">Manage farmer list</p>
             </button>
           </Link>
+          <Link to="/dashboard/officer/visit-requests">Visit Requests</Link>
+          <Link to="/dashboard/officer/consultations">Virtual Consultation</Link>
 
           <Link to="/dashboard/officer/schedule">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
@@ -239,18 +242,22 @@ const OfficerDashboard = () => {
               <p className="text-sm text-neutral-400">Plan farm visits</p>
             </button>
           </Link>
+          
 
-          <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
+          {/*<button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
             <CheckCircle className="text-success mb-3" size={32} />
             <h3 className="font-semibold mb-1">Verify Farmer</h3>
             <p className="text-sm text-neutral-400">Process verifications</p>
-          </button>
+          </button>*/}
 
+          // AFTER
+        <Link to="/dashboard/officer/reports">
           <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
             <TrendingUp className="text-warning mb-3" size={32} />
             <h3 className="font-semibold mb-1">View Reports</h3>
             <p className="text-sm text-neutral-400">Access analytics</p>
           </button>
+        </Link>
         </div>
       </Card>
     </div>

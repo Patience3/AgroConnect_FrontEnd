@@ -64,6 +64,11 @@ const BuyerOrdersPage = () => {
     { label: 'Cancelled', value: ORDER_STATUS.CANCELLED },
   ];
 
+  {/*const filteredOrders = orders.filter(order => {
+  if (filterStatus === 'all') return true;
+  return order.status === filterStatus;
+});*/}
+
   const OrderCard = ({ order }) => (
     <Card hover>
       <div className="space-y-4">

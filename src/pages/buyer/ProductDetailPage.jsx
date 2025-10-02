@@ -52,10 +52,13 @@ const ProductDetailPage = () => {
     }
   };
 
+ 
   const handleAddToCart = () => {
-    // Add to cart logic
-    console.log('Add to cart:', { product, quantity });
+  addToCart(product, quantity);
+  navigate('/dashboard/cart');
+  console.log('Add to cart:', { product, quantity });
   };
+   
 
   if (isLoading) {
     return (
@@ -222,6 +225,7 @@ const ProductDetailPage = () => {
 
           {/* Actions */}
           <div className="flex gap-4">
+          
             <Button
               fullWidth
               icon={ShoppingCart}
@@ -234,9 +238,14 @@ const ProductDetailPage = () => {
               variant="secondary"
               size="lg"
               icon={Phone}
+              onClick={() => setShowContactModal(true)}
             >
               Contact
             </Button>
+            {/*const [showContactModal, setShowContactModal] = useState(false);*/}
+            {showContactModal && <ContactFarmerModal />}
+
+
           </div>
 
           {/* Additional Info */}

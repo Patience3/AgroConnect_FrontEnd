@@ -21,9 +21,10 @@ const MarketplacePage = () => {
     max_price: '',
   });
 
+  // 🔑 Reload products whenever filters, category, or search term change
   useEffect(() => {
     loadProducts();
-  }, [selectedCategory, filters]);
+  }, [selectedCategory, filters, searchTerm]);
 
   const loadProducts = async () => {
     try {
@@ -35,7 +36,7 @@ const MarketplacePage = () => {
         max_price: filters.max_price || undefined,
         search: searchTerm || undefined,
       };
-      
+
       const data = await productsService.getProducts(params);
       setProducts(data.products || data);
     } catch (error) {
@@ -43,11 +44,6 @@ const MarketplacePage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    loadProducts();
   };
 
   const ProductCard = ({ product }) => (
@@ -128,7 +124,7 @@ const MarketplacePage = () => {
 
       {/* Search and Filters */}
       <div className="space-y-4">
-        <form onSubmit={handleSearch} className="flex gap-4">
+        <form onSubmit={(e) => e.preventDefault()} className="flex gap-4">
           <div className="flex-1">
             <Input
               type="text"
@@ -138,7 +134,6 @@ const MarketplacePage = () => {
               icon={Search}
             />
           </div>
-          <Button type="submit">Search</Button>
           <Button
             type="button"
             variant="secondary"
@@ -236,7 +231,13 @@ const MarketplacePage = () => {
       ) : (
         <Card className="text-center py-12">
           <p className="text-neutral-400 mb-4">No products found</p>
-          <Button onClick={() => { setSearchTerm(''); setFilters({ is_organic: false, min_price: '', max_price: '' }); setSelectedCategory('all'); }}>
+          <Button
+            onClick={() => {
+              setSearchTerm('');
+              setFilters({ is_organic: false, min_price: '', max_price: '' });
+              setSelectedCategory('all');
+            }}
+          >
             Clear Filters
           </Button>
         </Card>
