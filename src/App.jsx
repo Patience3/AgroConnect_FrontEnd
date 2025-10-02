@@ -1,25 +1,45 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './context/AuthProvider';
+import { CartProvider } from './context/CartProvider';
+import { NotificationProvider } from './context/NotificationProvider';
 
 // Public Pages
 import LandingPage from './pages/public/LandingPage';
+
+// Auth Pages
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import VerifyPhonePage from './pages/auth/VerifyPhonePage';
 
 // Buyer Pages
 import MarketplacePage from './pages/buyer/MarketplacePage';
 import ProductDetailPage from './pages/buyer/ProductDetailPage';
+import CartPage from './pages/buyer/CartPage';
 import CheckoutPage from './pages/buyer/CheckoutPage';
 import BuyerOrdersPage from './pages/buyer/BuyerOrdersPage';
+import OrderTrackingPage from './pages/buyer/OrderTrackingPage';
+import PaymentHistoryPage from './pages/buyer/PaymentHistoryPage';
+import BuyerProfilePage from './pages/buyer/BuyerProfilePage';
 
 // Farmer Pages
 import FarmerDashboard from './pages/farmer/FarmerDashboard';
 import ProductsManagement from './pages/farmer/ProductsManagement';
+import InventoryPage from './pages/farmer/InventoryPage';
+import ProductFormPage from './pages/farmer/ProductFormPage';
 import FarmerOrdersPage from './pages/farmer/FarmerOrdersPage';
+import FarmerProfilePage from './pages/farmer/FarmerProfilePage';
+import RequestVisitPage from './pages/farmer/RequestVisitPage';
 
 // Officer Pages
 import OfficerDashboard from './pages/officer/OfficerDashboard';
 import FarmersManagement from './pages/officer/FarmersManagement';
+import SchedulePage from './pages/officer/SchedulePage';
+import VisitRequestsPage from './pages/officer/VisitRequestsPage';
+import OfficerProfilePage from './pages/officer/OfficerProfilePage';
+import ReportsPage from './pages/officer/ReportsPage';
+import VirtualConsultationPage from './pages/officer/VirtualConsultationPage';
 
 // Layouts
 import DashboardLayout from './components/layouts/DashboardLayout';
@@ -41,7 +61,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(currentRole)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -66,10 +86,24 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Dashboard Redirect Component
+const DashboardRedirect = () => {
+  const { currentRole } = useAuthContext();
+
+  // Redirect based on user role
+  if (currentRole === 'farmer') {
+    return <Navigate to="/dashboard/farmer" replace />;
+  } else if (currentRole === 'officer') {
+    return <Navigate to="/dashboard/officer" replace />;
+  }
+  // Default to marketplace for buyers and others
+  return <Navigate to="/dashboard/marketplace" replace />;
+};
+
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* ========== PUBLIC ROUTES ========== */}
       <Route
         path="/"
         element={
@@ -78,6 +112,8 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+
+      {/* ========== AUTH ROUTES ========== */}
       <Route
         path="/login"
         element={
@@ -94,8 +130,32 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPasswordPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/verify-phone"
+        element={
+          <PublicRoute>
+            <VerifyPhonePage />
+          </PublicRoute>
+        }
+      />
 
-      {/* Dashboard Routes */}
+      {/* ========== DASHBOARD ROUTES ========== */}
       <Route
         path="/dashboard"
         element={
@@ -104,13 +164,20 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* Buyer Routes */}
+        {/* Dashboard Index - Redirects based on role */}
+        <Route index element={<DashboardRedirect />} />
+
+        {/* ========== BUYER ROUTES ========== */}
         <Route path="marketplace" element={<MarketplacePage />} />
         <Route path="product/:id" element={<ProductDetailPage />} />
+        <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="orders" element={<BuyerOrdersPage />} />
+        <Route path="orders/:orderId/track" element={<OrderTrackingPage />} />
+        <Route path="payments" element={<PaymentHistoryPage />} />
+        <Route path="buyer/profile" element={<BuyerProfilePage />} />
 
-        {/* Farmer Routes */}
+        {/* ========== FARMER ROUTES ========== */}
         <Route
           path="farmer"
           element={
@@ -128,6 +195,30 @@ function AppRoutes() {
           }
         />
         <Route
+          path="farmer/inventory"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <InventoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="farmer/products/new"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <ProductFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="farmer/products/:id/edit"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <ProductFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="farmer/orders"
           element={
             <ProtectedRoute allowedRoles={['farmer']}>
@@ -135,8 +226,24 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="farmer/profile"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <FarmerProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="farmer/request-visit"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <RequestVisitPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Officer Routes */}
+        {/* ========== OFFICER ROUTES ========== */}
         <Route
           path="officer"
           element={
@@ -153,12 +260,49 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
-        {/* Default dashboard redirect based on role */}
-        <Route index element={<Navigate to="marketplace" replace />} />
+        <Route
+          path="officer/schedule"
+          element={
+            <ProtectedRoute allowedRoles={['officer']}>
+              <SchedulePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="officer/visit-requests"
+          element={
+            <ProtectedRoute allowedRoles={['officer']}>
+              <VisitRequestsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="officer/consultation"
+          element={
+            <ProtectedRoute allowedRoles={['officer']}>
+              <VirtualConsultationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="officer/reports"
+          element={
+            <ProtectedRoute allowedRoles={['officer']}>
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="officer/profile"
+          element={
+            <ProtectedRoute allowedRoles={['officer']}>
+              <OfficerProfilePage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
-      {/* 404 Route */}
+      {/* ========== 404 ROUTE ========== */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -168,7 +312,11 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <NotificationProvider>
+          <CartProvider>
+            <AppRoutes />
+          </CartProvider>
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   );

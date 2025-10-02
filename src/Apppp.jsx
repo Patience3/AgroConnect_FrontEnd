@@ -1,9 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './context/AuthProvider';
-import { DEVELOPMENT_MODE } from '@/config/development';
-
-// Development Pages
-import DevRoutes from './pages/dev/DevRoutes';
+import DevModeIndicator from './components/DevModeIndicator';
 
 // Public Pages
 import LandingPage from './pages/public/LandingPage';
@@ -31,11 +28,6 @@ import DashboardLayout from './components/layouts/DashboardLayout';
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, isLoading, currentRole } = useAuthContext();
-
-  // In development mode, bypass authentication
-  if (DEVELOPMENT_MODE) {
-    return children;
-  }
 
   if (isLoading) {
     return (
@@ -78,11 +70,6 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Development Route */}
-      {DEVELOPMENT_MODE && (
-        <Route path="/dev" element={<DevRoutes />} />
-      )}
-
       {/* Public Routes */}
       <Route
         path="/"
@@ -182,6 +169,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <DevModeIndicator /> {/* Add this line */}
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>

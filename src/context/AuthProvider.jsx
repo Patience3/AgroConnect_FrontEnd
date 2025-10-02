@@ -1,6 +1,8 @@
+// src/context/AuthProvider.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '@/services/authService';
 import { USER_ROLES } from '@/types';
+import { DEVELOPMENT_MODE, getMockUser, MOCK_TOKEN, initDevMode } from '@/config/development';
 
 const AuthContext = createContext(null);
 
@@ -20,6 +22,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = () => {
+      // Initialize development mode if enabled
+      if (DEVELOPMENT_MODE && import.meta.env.MODE === 'development') {
+        initDevMode();
+      }
+
       const isAuth = authService.isAuthenticated();
       if (isAuth) {
         const userData = authService.getCurrentUser();
@@ -36,6 +43,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (userData) => {
+    // In dev mode, simulate registration
+    if (DEVELOPMENT_MODE && import.meta.env.MODE === 'development') {
+      const mockUser = getMockUser();
+      setUser(mockUser);
+      setIsAuthenticated(true);
+      setCurrentRole(mockUser.roles?.[0] || null);
+      return mockUser;
+    }
+
     const { user: newUser } = await authService.register(userData);
     setUser(newUser);
     setIsAuthenticated(true);
@@ -44,6 +60,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (credentials) => {
+    // In dev mode, simulate login
+    if (DEVELOPMENT_MODE && import.meta.env.MODE === 'development') {
+      const mockUser = getMockUser();
+      authService.setToken(MOCK_TOKEN);
+      authService.setUser(mockUser);
+      authService.setCurrentRole(mockUser.roles?.[0] || null);
+      setUser(mockUser);
+      setIsAuthenticated(true);
+      setCurrentRole(mockUser.roles?.[0] || null);
+      return mockUser;
+    }
+
     const { user: loggedUser } = await authService.login(credentials);
     setUser(loggedUser);
     setIsAuthenticated(true);
