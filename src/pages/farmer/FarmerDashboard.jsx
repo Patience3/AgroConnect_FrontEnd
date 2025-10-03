@@ -8,6 +8,9 @@ import {
   ArrowRight,
   AlertCircle,
   Users,
+  Camera,
+  Cloud,
+  Lightbulb,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -123,6 +126,53 @@ const FarmerDashboard = () => {
         />
       </div>
 
+      {/* AI-Powered Tools Section */}
+      <Card>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Lightbulb className="text-accent-cyan" size={24} />
+              AI-Powered Farming Tools
+            </h2>
+            <p className="text-sm text-neutral-400 mt-1">
+              Smart solutions to boost your farming efficiency
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Link to="/dashboard/farmer/ai-crop-analysis">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-all border-2 border-transparent hover:border-accent-cyan text-left group">
+              <Camera className="text-accent-cyan mb-3 group-hover:scale-110 transition-transform" size={32} />
+              <h3 className="font-semibold mb-1">AI Crop Disease Detection</h3>
+              <p className="text-sm text-neutral-400">
+                Upload crop photos for smart disease analysis and recommendations
+              </p>
+            </button>
+          </Link>
+
+          <Link to="/dashboard/farmer/weather-insights">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-all border-2 border-transparent hover:border-info text-left group">
+              <Cloud className="text-info mb-3 group-hover:scale-110 transition-transform" size={32} />
+              <h3 className="font-semibold mb-1">Weather Intelligence</h3>
+              <p className="text-sm text-neutral-400">
+                Get AI-powered weather insights and recommendations
+              </p>
+            </button>
+          </Link>
+
+         {/*} <Link to="/dashboard/farmer/ai-recommendations">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-all border-2 border-transparent hover:border-success text-left group">
+              <Lightbulb className="text-success mb-3 group-hover:scale-110 transition-transform" size={32} />
+              <h3 className="font-semibold mb-1">Smart Recommendations</h3>
+              <p className="text-sm text-neutral-400">
+                Get personalized farming advice from AI
+              </p>
+            </button>
+          </Link>*/}
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
         <Card
@@ -209,14 +259,9 @@ const FarmerDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      navigate(`/dashboard/farmer/products/${product.id}/edit`)
-                    }
-                  >
-                    Restock
-                  </Button>
+                  <Link to={`/dashboard/farmer/products/${product.id}/edit`}>
+                    <Button size="sm">Restock</Button>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -231,7 +276,7 @@ const FarmerDashboard = () => {
       {/* Quick Actions */}
       <Card title="Quick Actions">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link to="/dashboard/farmer/products?action=add">
+          <Link to="/dashboard/farmer/products/new">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <Package className="text-accent-cyan mb-3" size={32} />
               <h3 className="font-semibold mb-1">Add Product</h3>
@@ -245,14 +290,13 @@ const FarmerDashboard = () => {
               <p className="text-sm text-neutral-400">Manage orders</p>
             </button>
           </Link>
-          <Link to="/dashboard/farmer/products">
+          <Link to="/dashboard/farmer/inventory">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <TrendingUp className="text-success mb-3" size={32} />
               <h3 className="font-semibold mb-1">Inventory</h3>
               <p className="text-sm text-neutral-400">Manage stock</p>
             </button>
           </Link>
-          // AFTER
           <Link to="/dashboard/farmer/request-visit">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <Users className="text-warning mb-3" size={32} />

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Upload, X, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Upload, X, AlertCircle, ArrowLeft, Camera, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import productsService from '@/services/productsService';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -8,17 +8,21 @@ import Card from '@/components/ui/Card';
 import Alert from '@/components/ui/Alert';
 import useNotifications from '@/hooks/useNotifications';
 import { PRODUCT_CATEGORIES, UNITS_OF_MEASURE, QUALITY_GRADES } from '@/types';
+import clsx from 'clsx';
 
 const ProductFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { success, error: showError } = useNotifications();
   const isEditing = Boolean(id);
+  const fileInputRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -73,36 +77,57 @@ const ProductFormPage = () => {
     setError('');
   };
 
+  const validateImage = (file) => {
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      return 'Only JPG, PNG, and WebP images are allowed';
+    }
+
+    if (file.size > maxSize) {
+      return 'Image size must be less than 5MB';
+    }
+
+    return null;
+  };
+
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
-    
+    processFiles(files);
+  };
+
+  const processFiles = (files) => {
     if (images.length + files.length > 5) {
       setError('Maximum 5 images allowed');
       return;
     }
 
-    const validFiles = files.filter(file => {
-      if (!file.type.startsWith('image/')) {
-        setError('Only image files are allowed');
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image size must be less than 5MB');
-        return false;
-      }
-      return true;
-    });
+    const validFiles = [];
+    const newPreviews = [];
 
-    setImages([...images, ...validFiles]);
+    for (const file of files) {
+      const validationError = validateImage(file);
+      if (validationError) {
+        setError(validationError);
+        continue;
+      }
 
-    // Create previews
-    validFiles.forEach(file => {
+      validFiles.push(file);
+
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result]);
+        newPreviews.push(reader.result);
+        if (newPreviews.length === validFiles.length) {
+          setImagePreviews(prev => [...prev, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
-    });
+    }
+
+    setImages(prev => [...prev, ...validFiles]);
+    setError('');
   };
 
   const handleRemoveImage = (index) => {
@@ -110,30 +135,63 @@ const ProductFormPage = () => {
     setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    processFiles(files);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    setUploadProgress(0);
 
     try {
+      let productId = id;
+
       if (isEditing) {
         await productsService.updateProduct(id, formData);
-        if (images.length > 0) {
-          await productsService.uploadProductImages(id, images);
-        }
         success('Success', 'Product updated successfully');
       } else {
         const newProduct = await productsService.createProduct(formData);
-        if (images.length > 0) {
-          await productsService.uploadProductImages(newProduct.id, images);
-        }
+        productId = newProduct.id;
         success('Success', 'Product created successfully');
       }
+
+      // Upload images if any
+      if (images.length > 0) {
+        setUploadProgress(50);
+        await productsService.uploadProductImages(productId, images);
+        setUploadProgress(100);
+      }
+
       navigate('/dashboard/farmer/products');
     } catch (err) {
       setError(err.message || 'Failed to save product');
     } finally {
       setIsLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -164,6 +222,143 @@ const ProductFormPage = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Product Images */}
+        <Card>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2 mb-2">
+              <Camera className="text-accent-cyan" size={24} />
+              Product Images
+            </h2>
+            <p className="text-sm text-neutral-400">
+              Add up to 5 high-quality images of your product (JPG, PNG, WebP - Max 5MB each)
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Image Previews */}
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative group">
+                    <div className="aspect-square rounded-lg overflow-hidden bg-neutral-800 border-2 border-neutral-700 hover:border-accent-cyan transition-colors">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute -top-2 -right-2 w-8 h-8 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                    >
+                      <X size={16} className="text-white" />
+                    </button>
+                    {index === 0 && (
+                      <div className="absolute bottom-2 left-2 px-2 py-1 bg-accent-cyan text-primary-dark text-xs font-semibold rounded">
+                        Main Image
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload Area */}
+            {imagePreviews.length < 5 && (
+              <div
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={clsx(
+                  'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all',
+                  isDragging
+                    ? 'border-accent-cyan bg-accent-cyan/10 scale-105'
+                    : 'border-neutral-700 hover:border-accent-teal hover:bg-neutral-900'
+                )}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  multiple
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-accent-cyan/20 flex items-center justify-center">
+                    {isDragging ? (
+                      <Upload className="text-accent-cyan animate-bounce" size={32} />
+                    ) : (
+                      <ImageIcon className="text-accent-cyan" size={32} />
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-lg font-medium text-neutral-100 mb-1">
+                      {isDragging ? 'Drop images here' : 'Upload Product Images'}
+                    </p>
+                    <p className="text-sm text-neutral-400">
+                      Drag & drop or click to browse
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs text-neutral-500">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={14} className="text-success" />
+                      JPG, PNG, WebP
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={14} className="text-success" />
+                      Max 5MB
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={14} className="text-success" />
+                      Up to 5 images
+                    </span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    icon={Upload}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    Select Images
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Upload Progress */}
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="p-4 bg-accent-cyan/10 border border-accent-cyan/30 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-accent-cyan">
+                    Uploading images...
+                  </span>
+                  <span className="text-sm font-mono text-accent-cyan">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent-cyan transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+
         {/* Basic Information */}
         <Card title="Basic Information">
           <div className="space-y-4">
@@ -238,7 +433,9 @@ const ProductFormPage = () => {
                 onChange={handleChange}
                 className="w-4 h-4 rounded border-neutral-700 bg-primary-light text-accent-cyan focus:ring-accent-teal"
               />
-              <span className="text-sm text-neutral-300">Organic Product</span>
+              <span className="text-sm font-medium text-neutral-300">
+                Organic Product
+              </span>
             </label>
           </div>
         </Card>
@@ -247,7 +444,7 @@ const ProductFormPage = () => {
         <Card title="Pricing & Inventory">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Price per Unit"
+              label="Price per Unit (GHS)"
               name="price_per_unit"
               type="number"
               step="0.01"
@@ -321,47 +518,6 @@ const ProductFormPage = () => {
           </div>
         </Card>
 
-        {/* Images */}
-        <Card title="Product Images">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square">
-                  <img
-                    src={preview}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(index)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                  >
-                    <X size={14} className="text-white" />
-                  </button>
-                </div>
-              ))}
-
-              {imagePreviews.length < 5 && (
-                <label className="aspect-square border-2 border-dashed border-neutral-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-accent-teal transition-colors">
-                  <Upload className="text-neutral-500 mb-2" size={32} />
-                  <span className="text-sm text-neutral-500">Upload Image</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-            <p className="text-xs text-neutral-500">
-              Maximum 5 images. Each image must be less than 5MB.
-            </p>
-          </div>
-        </Card>
-
         {/* Actions */}
         <div className="flex gap-4">
           <Button
@@ -369,13 +525,14 @@ const ProductFormPage = () => {
             variant="secondary"
             onClick={() => navigate(-1)}
             fullWidth
+            disabled={isLoading}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             loading={isLoading}
-            disabled={isLoading}
+            disabled={isLoading || imagePreviews.length === 0}
             fullWidth
           >
             {isEditing ? 'Update Product' : 'Create Product'}

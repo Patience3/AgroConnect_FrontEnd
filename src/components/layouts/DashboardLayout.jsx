@@ -1,40 +1,40 @@
 import { useState } from 'react';
-import NotificationCenter from '@/components/shared/NotificationCenter';
-
-
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/context/AuthProvider';
+import useCart from '@/hooks/useCart';
+import NotificationCenter from '@/components/shared/NotificationCenter';
 import {
   Menu,
   X,
   Home,
   ShoppingBag,
+  ShoppingCart,
   Package,
   TrendingUp,
   Users,
   Calendar,
   Settings,
   LogOut,
-  Bell,
   User,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const DashboardLayout = () => {
   const { user, currentRole, logout, switchRole } = useAuthContext();
+  const { getCartCount } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [error, setError] = useState('');
 
   // Navigation items based on role
   const getNavigationItems = () => {
-    const commonItems = [];
-
     if (currentRole === 'buyer') {
       return [
         { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingBag },
         { name: 'My Orders', href: '/dashboard/orders', icon: Package },
-        { name: 'My cart', href: '/dashboard/cart', icon: Package },
+        { name: 'My Cart', href: '/dashboard/cart', icon: ShoppingCart },
       ];
     }
 
@@ -54,41 +54,37 @@ const DashboardLayout = () => {
       ];
     }
 
-    return commonItems;
+    return [];
   };
 
   const navigationItems = getNavigationItems();
 
-  {/*const handleRoleSwitch = (role) => {
-    switchRole(role);
-    setDropdownOpen(false);
-    window.location.href = '/dashboard';
-  };*/}
   const handleRoleSwitch = async (role) => {
-  // Check if user has this role
-  if (!user.roles.includes(role)) {
-    setError('You do not have access to this role. Please add it in your profile.');
-    return;
-  }
-
-  try {
-    await switchRole(role);
-    setDropdownOpen(false);
-    
-    // Navigate based on role WITHOUT page reload
-    if (role === 'farmer') {
-      navigate('/dashboard/farmer');
-    } else if (role === 'officer') {
-      navigate('/dashboard/officer');
-    } else {
-      navigate('/dashboard/marketplace');
+    // Check if user has this role
+    if (!user.roles.includes(role)) {
+      setError('You do not have access to this role. Please add it in your profile.');
+      setTimeout(() => setError(''), 3000);
+      return;
     }
-  } catch (error) {
-    console.error('Error switching role:', error);
-    setError('Failed to switch role');
-  }
-};
-  
+
+    try {
+      await switchRole(role);
+      setDropdownOpen(false);
+      
+      // Navigate based on role WITHOUT page reload
+      if (role === 'farmer') {
+        navigate('/dashboard/farmer');
+      } else if (role === 'officer') {
+        navigate('/dashboard/officer');
+      } else {
+        navigate('/dashboard/marketplace');
+      }
+    } catch (error) {
+      console.error('Error switching role:', error);
+      setError('Failed to switch role');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -114,17 +110,6 @@ const DashboardLayout = () => {
                 </span>
               </Link>
             </div>
-            // In the navigation bar, add:
-            <Link to="/dashboard/cart">
-              <button className="relative">
-                <ShoppingCart size={20} />
-                {getCartCount() > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-accent-cyan text-primary-dark rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                    {getCartCount()}
-                  </span>
-                )}
-              </button>
-            </Link>
 
             {/* Right side actions */}
             <div className="flex items-center gap-4">
@@ -133,13 +118,22 @@ const DashboardLayout = () => {
                 <span className="badge-cyan capitalize">{currentRole}</span>
               </div>
 
+              {/* Cart for buyers */}
+              {currentRole === 'buyer' && (
+                <Link to="/dashboard/cart">
+                  <button className="relative text-neutral-300 hover:text-accent-cyan">
+                    <ShoppingCart size={20} />
+                    {getCartCount() > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-accent-cyan text-primary-dark rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                        {getCartCount()}
+                      </span>
+                    )}
+                  </button>
+                </Link>
+              )}
+
               {/* Notifications */}
-              // In navbar:
               <NotificationCenter />
-              <button className="relative text-neutral-300 hover:text-accent-cyan">
-                <Bell size={20} />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
-              </button>
 
               {/* User menu */}
               <div className="relative">
@@ -156,62 +150,75 @@ const DashboardLayout = () => {
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-primary-light border border-neutral-800 rounded-lg shadow-card">
-                    <div className="p-3 border-b border-neutral-800">
-                      <p className="text-sm font-medium text-neutral-100">
-                        {user?.full_name}
-                      </p>
-                      <p className="text-xs text-neutral-400 mt-1">
-                        {user?.email}
-                      </p>
-                    </div>
-
-                    {/* Switch role */}
-                    {user?.roles && user.roles.length > 1 && (
-                      <div className="p-2 border-b border-neutral-800">
-                        <p className="text-xs text-neutral-500 px-2 py-1">
-                          Switch Role
-                        </p>
-                        {user.roles.map((role) => (
-                          <button
-                            key={role}
-                            onClick={() => handleRoleSwitch(role)}
-                            className={clsx(
-                              'w-full text-left px-3 py-2 text-sm rounded-md transition-colors capitalize',
-                              role === currentRole
-                                ? 'bg-accent-teal/20 text-accent-cyan'
-                                : 'text-neutral-300 hover:bg-primary-dark'
-                            )}
-                          >
-                            {role}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="p-2">
-                      <Link 
-                      to={`/dashboard/${currentRole}/profile`}
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40"
                       onClick={() => setDropdownOpen(false)}
-                      className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-primary-dark rounded-md flex items-center gap-2"
-                    >
-                      <Settings size={16} />
-                      Profile & Settings
-                    </Link>
-                      <button
-                        onClick={logout}
-                        className="w-full text-left px-3 py-2 text-sm text-error hover:bg-error/10 rounded-md flex items-center gap-2"
-                      >
-                        <LogOut size={16} />
-                        Logout
-                      </button>
+                    />
+                    <div className="absolute right-0 mt-2 w-56 bg-primary-light border border-neutral-800 rounded-lg shadow-card z-50">
+                      <div className="p-3 border-b border-neutral-800">
+                        <p className="text-sm font-medium text-neutral-100">
+                          {user?.full_name}
+                        </p>
+                        <p className="text-xs text-neutral-400 mt-1">
+                          {user?.email}
+                        </p>
+                      </div>
+
+                      {/* Switch role */}
+                      {user?.roles && user.roles.length > 1 && (
+                        <div className="p-2 border-b border-neutral-800">
+                          <p className="text-xs text-neutral-500 px-2 py-1">
+                            Switch Role
+                          </p>
+                          {user.roles.map((role) => (
+                            <button
+                              key={role}
+                              onClick={() => handleRoleSwitch(role)}
+                              className={clsx(
+                                'w-full text-left px-3 py-2 text-sm rounded-md transition-colors capitalize',
+                                role === currentRole
+                                  ? 'bg-accent-teal/20 text-accent-cyan'
+                                  : 'text-neutral-300 hover:bg-primary-dark'
+                              )}
+                            >
+                              {role}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="p-2">
+                        <Link 
+                          to={`/dashboard/${currentRole}/profile`}
+                          onClick={() => setDropdownOpen(false)}
+                          className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-primary-dark rounded-md flex items-center gap-2"
+                        >
+                          <Settings size={16} />
+                          Profile & Settings
+                        </Link>
+                        <button
+                          onClick={logout}
+                          className="w-full text-left px-3 py-2 text-sm text-error hover:bg-error/10 rounded-md flex items-center gap-2"
+                        >
+                          <LogOut size={16} />
+                          Logout
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
           </div>
         </div>
+        
+        {/* Error message */}
+        {error && (
+          <div className="bg-error/10 border-t border-error/30 px-4 py-2">
+            <p className="text-sm text-error text-center">{error}</p>
+          </div>
+        )}
       </nav>
 
       <div className="pt-16 flex">

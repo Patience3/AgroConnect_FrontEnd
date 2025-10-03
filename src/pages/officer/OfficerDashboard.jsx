@@ -7,6 +7,7 @@ import {
   Clock,
   TrendingUp,
   Award,
+  Laptop,
   ArrowRight,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
@@ -222,9 +223,11 @@ const OfficerDashboard = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
+            {/* Quick Actions */}
       <Card title="Quick Actions">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          {/* View Farmers */}
           <Link to="/dashboard/officer/farmers">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <Users className="text-accent-cyan mb-3" size={32} />
@@ -232,9 +235,26 @@ const OfficerDashboard = () => {
               <p className="text-sm text-neutral-400">Manage farmer list</p>
             </button>
           </Link>
-          <Link to="/dashboard/officer/visit-requests">Visit Requests</Link>
-          <Link to="/dashboard/officer/consultations">Virtual Consultation</Link>
 
+          {/* Visit Requests */}
+          <Link to="/dashboard/officer/visit-requests">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
+              <CheckCircle className="text-accent-green mb-3" size={32} />
+              <h3 className="font-semibold mb-1">Visit Requests</h3>
+              <p className="text-sm text-neutral-400">Handle farm visit requests</p>
+            </button>
+          </Link>
+
+          {/* Virtual Consultation */}
+          <Link to="/dashboard/officer/consultation">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
+              <Laptop className="text-accent-blue mb-3" size={32} />
+              <h3 className="font-semibold mb-1">Virtual Consultation</h3>
+              <p className="text-sm text-neutral-400">Assist farmers remotely</p>
+            </button>
+          </Link>
+
+          {/* Schedule Visit */}
           <Link to="/dashboard/officer/schedule">
             <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
               <Calendar className="text-accent-teal mb-3" size={32} />
@@ -242,22 +262,22 @@ const OfficerDashboard = () => {
               <p className="text-sm text-neutral-400">Plan farm visits</p>
             </button>
           </Link>
-          
-
           {/*<button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
             <CheckCircle className="text-success mb-3" size={32} />
             <h3 className="font-semibold mb-1">Verify Farmer</h3>
             <p className="text-sm text-neutral-400">Process verifications</p>
           </button>*/}
 
-          // AFTER
-        <Link to="/dashboard/officer/reports">
-          <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
-            <TrendingUp className="text-warning mb-3" size={32} />
-            <h3 className="font-semibold mb-1">View Reports</h3>
-            <p className="text-sm text-neutral-400">Access analytics</p>
-          </button>
-        </Link>
+
+          {/* Reports */}
+          <Link to="/dashboard/officer/reports">
+            <button className="w-full p-6 bg-primary-dark rounded-lg hover:bg-neutral-900 transition-colors text-left">
+              <TrendingUp className="text-warning mb-3" size={32} />
+              <h3 className="font-semibold mb-1">View Reports</h3>
+              <p className="text-sm text-neutral-400">Access analytics</p>
+            </button>
+          </Link>
+          
         </div>
       </Card>
     </div>

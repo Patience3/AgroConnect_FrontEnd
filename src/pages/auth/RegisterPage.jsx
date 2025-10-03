@@ -70,8 +70,18 @@ const RegisterPage = () => {
       setError("Phone number is required");
       return false;
     }
+    // Basic phone validation
+    if (!/^\+?[1-9]\d{1,14}$/.test(formData.phone_number.replace(/\s/g, ''))) {
+      setError("Please enter a valid phone number");
+      return false;
+    }
     if (!formData.email.trim()) {
       setError("Email is required");
+      return false;
+    }
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError("Please enter a valid email address");
       return false;
     }
     if (!formData.password) {
@@ -118,8 +128,21 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
-      await register(formData);
-      navigate("/dashboard");
+      const response = await register(formData);
+      
+      // Check if phone verification is required
+      if (response.user && !response.user.is_phone_verified) {
+        // Navigate to phone verification with phone number
+        navigate('/verify-phone', { 
+          state: { 
+            phoneNumber: formData.phone_number,
+            from: 'registration'
+          } 
+        });
+      } else {
+        // Phone already verified or not required, go to dashboard
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -212,7 +235,7 @@ const RegisterPage = () => {
                 value={formData.phone_number}
                 onChange={handleChange}
                 icon={Phone}
-                helperText="Include country code"
+                helperText="Include country code (e.g., +233)"
                 required
               />
 

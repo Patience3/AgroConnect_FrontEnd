@@ -2,6 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './context/AuthProvider';
 import { CartProvider } from './context/CartProvider';
 import { NotificationProvider } from './context/NotificationProvider';
+import NotFoundPage from "./pages/public/NotFoundPage";
+
+<Route path="*" element={<NotFoundPage />} />
+
 
 // Public Pages
 import LandingPage from './pages/public/LandingPage';
@@ -31,6 +35,8 @@ import ProductFormPage from './pages/farmer/ProductFormPage';
 import FarmerOrdersPage from './pages/farmer/FarmerOrdersPage';
 import FarmerProfilePage from './pages/farmer/FarmerProfilePage';
 import RequestVisitPage from './pages/farmer/RequestVisitPage';
+import FarmerAICropAnalysis from './pages/farmer/FarmerAICropAnalysis';
+import FarmerWeatherInsights from './pages/farmer/FarmerWeatherInsights';
 
 // Officer Pages
 import OfficerDashboard from './pages/officer/OfficerDashboard';
@@ -40,7 +46,6 @@ import VisitRequestsPage from './pages/officer/VisitRequestsPage';
 import OfficerProfilePage from './pages/officer/OfficerProfilePage';
 import ReportsPage from './pages/officer/ReportsPage';
 import VirtualConsultationPage from './pages/officer/VirtualConsultationPage';
-
 
 // Layouts
 import DashboardLayout from './components/layouts/DashboardLayout';
@@ -91,13 +96,11 @@ const PublicRoute = ({ children }) => {
 const DashboardRedirect = () => {
   const { currentRole } = useAuthContext();
 
-  // Redirect based on user role
   if (currentRole === 'farmer') {
     return <Navigate to="/dashboard/farmer" replace />;
   } else if (currentRole === 'officer') {
     return <Navigate to="/dashboard/officer" replace />;
   }
-  // Default to marketplace for buyers and others
   return <Navigate to="/dashboard/marketplace" replace />;
 };
 
@@ -243,6 +246,23 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        {/* NEW: AI FEATURES FOR FARMERS */}
+        <Route
+          path="farmer/ai-crop-analysis"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <FarmerAICropAnalysis />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="farmer/weather-insights"
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <FarmerWeatherInsights />
+            </ProtectedRoute>
+          }
+        />
 
         {/* ========== OFFICER ROUTES ========== */}
         <Route
@@ -302,7 +322,6 @@ function AppRoutes() {
           }
         />
       </Route>
-  
 
       {/* ========== 404 ROUTE ========== */}
       <Route path="*" element={<Navigate to="/" replace />} />

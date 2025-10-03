@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, Search, MoreVertical } from 'lucide-react';
 import productsService from '@/services/productsService';
 import Button from '@/components/ui/Button';
@@ -6,15 +7,14 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { formatCurrency } from '@/utils/helpers';
 import { PRODUCT_STATUS } from '@/types';
-import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
 const ProductsManagement = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
     loadProducts();
@@ -23,7 +23,6 @@ const ProductsManagement = () => {
   const loadProducts = async () => {
     try {
       setIsLoading(true);
-      // This would fetch the current farmer's products
       const data = await productsService.getFarmerProducts('current');
       setProducts(data.products || data);
     } catch (error) {
@@ -33,22 +32,33 @@ const ProductsManagement = () => {
     }
   };
 
-  {/*const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );*/}
-  const filteredProducts = products.filter((product) =>{
-    if (filterStatus === 'all') return true;
-    else if (filterStatus === 'available') return product.status === PRODUCT_STATUS.AVAILABLE;
-    else if (filterStatus === 'out_of_stock') return product.status === PRODUCT_STATUS.OUT_OF_STOCK;
-    else if (filterStatus === 'discontinued') return product.status === PRODUCT_STATUS.DISCONTINUED;
-    return product.status === filterStatus;
-  }
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
     
-  );
-    const filteredOrders = orders.filter(order => {
-  if (filterStatus === 'all') return true;
-  return order.status === filterStatus;
-});
+    try {
+      await productsService.deleteProduct(productId);
+      loadProducts();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
+    // Filter by search term
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filter by status
+    let matchesStatus = true;
+    if (filterStatus === 'available') {
+      matchesStatus = product.status === PRODUCT_STATUS.AVAILABLE;
+    } else if (filterStatus === 'out_of_stock') {
+      matchesStatus = product.status === PRODUCT_STATUS.OUT_OF_STOCK;
+    } else if (filterStatus === 'discontinued') {
+      matchesStatus = product.status === PRODUCT_STATUS.DISCONTINUED;
+    }
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -117,29 +127,44 @@ const ProductsManagement = () => {
                   </button>
 
                   {showActions && (
-                    <div className="absolute right-0 mt-2 w-48 bg-primary-light border border-neutral-800 rounded-lg shadow-card z-10">
-                      <button
-                        onClick={() => navigate(`/dashboard/product/${product.id}`)}
-                        className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-primary-dark flex items-center gap-2"
-                      >
-                        <Eye size={16} />
-                        View Details
-                      </button>
-                      <button
-                        onClick={() => navigate(`/dashboard/farmer/products/${product.id}/edit`)}
-                        className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-primary-dark flex items-center gap-2"
-                      >
-                        <Edit size={16} />
-                        Edit Product
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
-                      >
-                        <Trash2 size={16} />
-                        Delete
-                      </button>
-                    </div>
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setShowActions(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-48 bg-primary-light border border-neutral-800 rounded-lg shadow-card z-20">
+                        <button
+                          onClick={() => {
+                            navigate(`/dashboard/product/${product.id}`);
+                            setShowActions(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-primary-dark flex items-center gap-2"
+                        >
+                          <Eye size={16} />
+                          View Details
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate(`/dashboard/farmer/products/${product.id}/edit`);
+                            setShowActions(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-primary-dark flex items-center gap-2"
+                        >
+                          <Edit size={16} />
+                          Edit Product
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleDeleteProduct(product.id);
+                            setShowActions(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -158,21 +183,33 @@ const ProductsManagement = () => {
           <h1 className="text-3xl font-bold mb-2">Products Management</h1>
           <p className="text-neutral-400">Manage your product listings</p>
         </div>
-        <Button icon={Plus} onClick={() => setShowAddModal(true)}>
+        <Button icon={Plus} onClick={() => navigate('/dashboard/farmer/products/new')}>
           Add Product
         </Button>
       </div>
 
-      {/* Search */}
-      <Card>
-        <Input
-          type="text"
-          placeholder="Search products..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          icon={Search}
-        />
-      </Card>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <Input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={Search}
+          />
+        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="input w-full sm:w-48"
+        >
+          <option value="all">All Status</option>
+          <option value="available">Available</option>
+          <option value="out_of_stock">Out of Stock</option>
+          <option value="discontinued">Discontinued</option>
+        </select>
+      </div>
 
       {/* Products List */}
       {isLoading ? (
@@ -194,80 +231,15 @@ const ProductsManagement = () => {
           <div className="w-20 h-20 bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus size={40} className="text-neutral-600" />
           </div>
-          <p className="text-neutral-400 mb-4">No products found</p>
-          <Button onClick={() => setShowAddModal(true)}>
+          <p className="text-neutral-400 mb-4">
+            {searchTerm || filterStatus !== 'all' 
+              ? 'No products match your filters' 
+              : 'No products found'}
+          </p>
+          <Button onClick={() => navigate('/dashboard/farmer/products/new')}>
             Add Your First Product
           </Button>
         </Card>
-      )}
-
-      {/* Add Product Modal would go here */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-2xl w-full">
-            <h2 className="text-2xl font-bold mb-4">Add New Product</h2>
-            <form className="space-y-4">
-              <Input
-                label="Product Name"
-                placeholder="e.g., Fresh Tomatoes"
-                required
-              />
-              <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Describe your product..."
-                  className="input"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Price per Unit"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  required
-                />
-                <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">
-                    Unit of Measure
-                  </label>
-                  <select className="input">
-                    <option value="kg">Kilogram (kg)</option>
-                    <option value="gram">Gram</option>
-                    <option value="liter">Liter</option>
-                    <option value="piece">Piece</option>
-                    <option value="dozen">Dozen</option>
-                    <option value="bunch">Bunch</option>
-                  </select>
-                </div>
-              </div>
-              <Input
-                label="Quantity Available"
-                type="number"
-                placeholder="100"
-                required
-              />
-              
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => setShowAddModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" fullWidth>
-                  Add Product
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
       )}
     </div>
   );

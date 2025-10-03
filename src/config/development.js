@@ -69,7 +69,7 @@ export const MOCK_USERS = {
 
 // Default mock user - Change this to test different roles
 // Options: 'buyer', 'farmer', 'officer', 'multiRole'
-export const DEFAULT_MOCK_USER = 'multirole';  
+export const DEFAULT_MOCK_USER = 'buyer';  
 
 // Mock token
 export const MOCK_TOKEN = 'mock-jwt-token-for-development';

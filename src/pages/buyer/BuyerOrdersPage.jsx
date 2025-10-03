@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Package, Clock, CheckCircle, XCircle, Eye, MapPin, Truck } from 'lucide-react';
 import ordersService from '@/services/ordersService';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -8,6 +9,7 @@ import { ORDER_STATUS } from '@/types';
 import clsx from 'clsx';
 
 const BuyerOrdersPage = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -36,6 +38,7 @@ const BuyerOrdersPage = () => {
       [ORDER_STATUS.PENDING]: { label: 'Pending', class: 'badge-warning' },
       [ORDER_STATUS.CONFIRMED]: { label: 'Confirmed', class: 'badge-info' },
       [ORDER_STATUS.PREPARING]: { label: 'Preparing', class: 'badge-info' },
+      [ORDER_STATUS.READY]: { label: 'Ready', class: 'badge-success' },
       [ORDER_STATUS.IN_TRANSIT]: { label: 'In Transit', class: 'badge-info' },
       [ORDER_STATUS.DELIVERED]: { label: 'Delivered', class: 'badge-success' },
       [ORDER_STATUS.CANCELLED]: { label: 'Cancelled', class: 'badge-error' },
@@ -51,6 +54,8 @@ const BuyerOrdersPage = () => {
         return <CheckCircle className="text-success" size={20} />;
       case ORDER_STATUS.CANCELLED:
         return <XCircle className="text-error" size={20} />;
+      case ORDER_STATUS.IN_TRANSIT:
+        return <Truck className="text-info" size={20} />;
       default:
         return <Clock className="text-warning" size={20} />;
     }
@@ -63,11 +68,6 @@ const BuyerOrdersPage = () => {
     { label: 'Delivered', value: ORDER_STATUS.DELIVERED },
     { label: 'Cancelled', value: ORDER_STATUS.CANCELLED },
   ];
-
-  {/*const filteredOrders = orders.filter(order => {
-  if (filterStatus === 'all') return true;
-  return order.status === filterStatus;
-});*/}
 
   const OrderCard = ({ order }) => (
     <Card hover>
@@ -108,19 +108,46 @@ const BuyerOrdersPage = () => {
           )}
         </div>
 
+        {/* Delivery Info */}
+        {order.delivery_address && (
+          <div className="flex items-start gap-2 text-sm p-3 bg-primary-dark rounded-lg">
+            <MapPin size={16} className="text-neutral-500 mt-0.5 flex-shrink-0" />
+            <span className="text-neutral-300">{order.delivery_address}</span>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
           <div>
             <p className="text-sm text-neutral-400">Total</p>
             <p className="price text-xl">{formatCurrency(order.total_amount)}</p>
           </div>
-          <Button size="sm" variant="secondary" icon={Eye}>
-            View Details
-          </Button>
+          <div className="flex gap-2">
+            {/* Track Order Button - Always visible for active orders */}
+            {order.status !== ORDER_STATUS.CANCELLED && (
+              <Button 
+                size="sm" 
+                variant="primary" 
+                icon={Truck}
+                onClick={() => navigate(`/dashboard/orders/${order.id}/track`)}
+              >
+                Track
+              </Button>
+            )}
+            {/* View Details Button */}
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              icon={Eye}
+              onClick={() => navigate(`/dashboard/orders/${order.id}/track`)}
+            >
+              Details
+            </Button>
+          </div>
         </div>
 
-        {/* Delivery Info */}
-        {order.delivery_date && (
+        {/* Expected Delivery */}
+        {order.delivery_date && order.status !== ORDER_STATUS.DELIVERED && (
           <div className="bg-accent-teal/10 border border-accent-teal/30 rounded-lg p-3 text-sm">
             <p className="text-neutral-300">
               Expected Delivery: {formatDate(order.delivery_date)}
@@ -137,6 +164,34 @@ const BuyerOrdersPage = () => {
       <div>
         <h1 className="text-3xl font-bold mb-2">My Orders</h1>
         <p className="text-neutral-400">Track and manage your orders</p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card hover className="text-center">
+          <p className="text-2xl font-bold text-accent-cyan">
+            {orders.length}
+          </p>
+          <p className="text-sm text-neutral-400 mt-1">Total Orders</p>
+        </Card>
+        <Card hover className="text-center">
+          <p className="text-2xl font-bold text-warning">
+            {orders.filter(o => o.status === ORDER_STATUS.PENDING).length}
+          </p>
+          <p className="text-sm text-neutral-400 mt-1">Pending</p>
+        </Card>
+        <Card hover className="text-center">
+          <p className="text-2xl font-bold text-info">
+            {orders.filter(o => o.status === ORDER_STATUS.IN_TRANSIT).length}
+          </p>
+          <p className="text-sm text-neutral-400 mt-1">In Transit</p>
+        </Card>
+        <Card hover className="text-center">
+          <p className="text-2xl font-bold text-success">
+            {orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length}
+          </p>
+          <p className="text-sm text-neutral-400 mt-1">Delivered</p>
+        </Card>
       </div>
 
       {/* Status Filters */}
@@ -178,7 +233,7 @@ const BuyerOrdersPage = () => {
             <Package size={40} className="text-neutral-600" />
           </div>
           <p className="text-neutral-400 mb-4">No orders found</p>
-          <Button onClick={() => window.location.href = '/dashboard/marketplace'}>
+          <Button onClick={() => navigate('/dashboard/marketplace')}>
             Start Shopping
           </Button>
         </Card>
